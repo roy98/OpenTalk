@@ -1,0 +1,58 @@
+type User @model {
+  id: ID!
+  name: String!
+  alias: String!
+  email: String!
+  avatar: String
+  categories: [Category] @connection
+  posts: [Post] @connection(keyName: "postByUser", fields: ["id"])
+  likes: [Like] @connection(keyName: "likeByUser", fields: ["id"])
+  friends: [Friend] @connection(keyName: "friendByUser", fields: ["id"])
+}
+
+type Post @model @key(name: "postByUser", fields: ["userID"]) {
+  id: ID!
+  content: String
+  status: String!
+  date: String!
+  userID: ID!
+  user: User @connection(fields: ["userID"])
+  image_url: String
+  comments: [Comment] @connection(keyName: "commentByPost", fields: ["id"])
+  likes: [Like] @connection(keyName: "likeByPost", fields: ["id"])
+}
+
+type Comment
+  @model
+  @key(name: "commentByPost", fields: ["postID"])
+  @key(name: "commentByUser", fields: ["userID"]) {
+  id: ID!
+  postID: ID!
+  userID: ID!
+  user: User @connection(fields: ["userID"])
+  post: Post @connection(fields: ["postID"])
+  content: String!
+}
+
+type Like
+  @model
+  @key(name: "likeByPost", fields: ["postID"])
+  @key(name: "likeByUser", fields: ["userID"]) {
+  id: ID!
+  postID: ID!
+  userID: ID!
+  user: User @connection(fields: ["userID"])
+  post: Post @connection(fields: ["postID"])
+}
+
+type Category @model {
+  id: ID!
+  name: String!
+  image: String!
+}
+
+type Friend @model @key(name: "friendByUser", fields: ["userID"]) {
+  id: ID!
+  userID: ID!
+  friendID: ID!
+}

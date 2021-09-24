@@ -2,9 +2,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
+  ActivityIndicator,
   Alert,
   Image,
-  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -14,31 +14,64 @@ import { IconButton } from "react-native-paper";
 import Choose_categories from "../Components/Choose_categories";
 import FollowFriends from "../Components/FollowFriends";
 import SignupForm from "../Components/SignupForm";
+import { useDispatch, useSelector } from "react-redux";
+import { bindActionCreators } from "redux";
+import * as actionCreators from "../Store/action_creators/index";
+import { login } from "../API/Auth.service";
 
 function SignUpScreen({ navigation }) {
+  /* Global State for login */
+  const currentUser = useSelector((state) => state.authentication.user);
+  const dispatch = useDispatch();
+  const { signUp, error, success, signIn } = bindActionCreators(
+    actionCreators,
+    dispatch
+  );
+
+  /* Activity indicator */
+  const [showLoader, setShowLoader] = useState(false);
+  const displayLoader = () => setShowLoader(true);
+  const hideLoader = () => setShowLoader(false);
+  useEffect(() => {
+    hideLoader(false);
+  }, []);
+
   const [activeStep, setActiveStep] = useState(1);
 
   const nextStep = () => {
     if (activeStep < 3) {
       setActiveStep((step) => step + 1);
     } else {
-      Alert.alert(
-        "Registration Completed",
-        "Thank you for the registration! Continues?",
-        [
-          { text: "Don't leave", style: "cancel" },
-          {
-            text: "Let's Go",
-            style: "destructive",
-            onPress: () => console.log("Let's go"),
-          },
-        ]
-      );
+      displayLoader();
+      login(currentUser.email, currentUser.password)
+        .then((res) => {
+          hideLoader();
+          const data = res.signInUserSession.idToken;
+          signIn({
+            token: data.jwtToken,
+            user: {
+              id: data.payload.sub,
+              email: currentUser.email,
+              name: data.payload.name,
+              alias: `@${currentUser.email.split("@")[0]}`,
+            },
+          });
+        })
+        .catch((err) => {
+          error(err.message);
+          navigation.popToTop();
+          hideLoader();
+        });
     }
   };
 
   return (
     <>
+      {showLoader ? (
+        <View style={styles.loader}>
+          <ActivityIndicator color="purple" size="large" />
+        </View>
+      ) : null}
       <SafeAreaView style={styles.container}>
         <LinearGradient
           style={styles.gradient}
@@ -109,9 +142,19 @@ function SignUpScreen({ navigation }) {
         </LinearGradient>
       </SafeAreaView>
       {activeStep === 1 ? (
-        <SignupForm onNext={nextStep} />
+        <SignupForm
+          onNext={nextStep}
+          displayLoader={displayLoader}
+          hideLoader={hideLoader}
+          error={error}
+          success={success}
+        />
       ) : activeStep === 2 ? (
-        <Choose_categories onNext={nextStep} />
+        <Choose_categories
+          onNext={nextStep}
+          displayLoader={displayLoader}
+          hideLoader={hideLoader}
+        />
       ) : (
         <FollowFriends onNext={nextStep} />
       )}
@@ -165,6 +208,17 @@ const styles = StyleSheet.create({
   step_active: {
     backgroundColor: "#fff",
     width: 15,
+  },
+  loader: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    right: 0,
+    left: 0,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999,
   },
 });
 

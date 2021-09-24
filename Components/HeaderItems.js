@@ -1,19 +1,19 @@
-import { useNavigation } from "@react-navigation/core";
-import React, { useEffect, useState } from "react";
-import { TouchableHighlight } from "react-native";
+import React, { useState } from "react";
 import { TouchableOpacity } from "react-native-gesture-handler";
-//import { useNavigation } from "@react-navigation/core";
+import { useNavigation } from "@react-navigation/core";
 import { Avatar, IconButton } from "react-native-paper";
-//import { DrawerActions } from "@react-navigation/native";
+import { DrawerActions } from "@react-navigation/native";
 import Friends from "../API/FakeFriends";
 
 export function HeaderLeftDrawer() {
   // Will use to toggle the Navigation Drawer;
   const navigation = useNavigation();
   return (
-    <TouchableHighlight>
+    <TouchableOpacity
+      onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
+    >
       <IconButton icon="menu" color="#fff" />
-    </TouchableHighlight>
+    </TouchableOpacity>
   );
 }
 
@@ -28,7 +28,7 @@ export function HeaderLeftBack() {
 
 export function HeaderRightAvatar() {
   const navigation = useNavigation();
-  const [user, setUser] = useState(Friends[Math.floor(Math.random() * 8)]);
+  const [user, setUser] = useState(Friends[0]);
 
   return (
     <TouchableOpacity

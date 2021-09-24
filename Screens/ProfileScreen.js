@@ -1,10 +1,30 @@
-import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import React, { useLayoutEffect } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Colors } from "react-native-paper";
+import { useDispatch } from "react-redux";
+import { bindActionCreators } from "redux";
+import * as actionCreators from "../Store/action_creators/index";
 
-function ProfileScreen(props) {
+function ProfileScreen({ navigation, route }) {
+  /* Global State for login */
+  const dispatch = useDispatch();
+  const { signOut } = bindActionCreators(actionCreators, dispatch);
+
+  const handleSignOut = () => signOut();
+
   return (
     <View style={styles.container}>
-      <Text>Profile Details:</Text>
+      <TouchableOpacity
+        onPress={() => handleSignOut()}
+        style={{
+          paddingVertical: 10,
+          paddingHorizontal: 50,
+          backgroundColor: Colors.red700,
+          borderRadius: 20,
+        }}
+      >
+        <Text style={{ color: "#fff" }}>Log Out</Text>
+      </TouchableOpacity>
     </View>
   );
 }

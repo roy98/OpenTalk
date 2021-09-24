@@ -30,6 +30,7 @@ export async function launchImageLibrary() {
     allowsEditing: true,
     quality: 1,
     aspect: [4, 3],
+    base64: true,
   });
 
   if (Platform.OS === "android") {
@@ -53,6 +54,7 @@ export async function launchCamera() {
     allowsEditing: true,
     quality: 1,
     aspect: [4, 3],
+    base64: true,
   });
 
   if (Platform.OS === "android") {

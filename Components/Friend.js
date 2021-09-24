@@ -1,17 +1,33 @@
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { Avatar, IconButton } from "react-native-paper";
+import { Avatar, Colors, IconButton } from "react-native-paper";
 
-function Friend({ friend }) {
+function Friend({ user, followFriend, unfollowFriend, userFriends }) {
   const [hasAvatar, setHasAvatar] = useState(false);
 
+  const isUserSelected = () => {
+    if (userFriends.findIndex((f) => f.friendID == user.id) !== -1) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  const getUserToUnfollow = (user) => {
+    const friend = userFriends.find((f) => f.friendID == user.id);
+    if (friend) {
+      unfollowFriend(friend);
+    }
+  };
+
   useEffect(() => {
-    if (friend.avatar && friend.avatar !== "") {
+    if (user.avatar && user.avatar !== "") {
       setHasAvatar(true);
     }
   }, []);
+
   function getFriendLabel() {
-    return friend.name
+    return user.name
       .split(" ")
       .map((item) => item[0])
       .join("")
@@ -46,7 +62,7 @@ function Friend({ friend }) {
         >
           {hasAvatar ? (
             <Avatar.Image
-              source={{ uri: friend.avatar }}
+              source={{ uri: user.avatar }}
               size={60}
               style={styles.avata_overlay}
             />
@@ -54,24 +70,51 @@ function Friend({ friend }) {
             <Avatar.Text label={getFriendLabel()} size={60} />
           )}
         </View>
-        <Text style={styles.text}>{friend.name}</Text>
+        <Text style={styles.text}>{user.name}</Text>
         <Text style={[styles.text, { color: "rgba(0,0,0,0.3)" }]}>
-          {friend.alias}
+          {user.alias}
         </Text>
       </View>
-      <TouchableOpacity
-        style={[
-          styles.btn,
-          {
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            marginVertical: 5,
-          },
-        ]}
-      >
-        <Text style={[{ textAlign: "center" }, styles.btn_text]}>S'aboner</Text>
-      </TouchableOpacity>
+      {isUserSelected() ? (
+        <TouchableOpacity
+          onPress={() => getUserToUnfollow(user)}
+          style={[
+            styles.btn,
+            {
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              marginVertical: 5,
+              backgroundColor: Colors.purple100,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              { textAlign: "center", fontFamily: "Avenir", color: "#fff" },
+            ]}
+          >
+            Déja aboné
+          </Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          onPress={() => followFriend(user)}
+          style={[
+            styles.btn,
+            {
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              marginVertical: 5,
+            },
+          ]}
+        >
+          <Text style={[{ textAlign: "center" }, styles.btn_text]}>
+            S'aboner
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }

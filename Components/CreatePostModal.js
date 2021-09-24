@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActionSheetIOS,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -17,6 +18,7 @@ import {
 import { Avatar, Colors, IconButton } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import * as CameraFunctions from "../Utils/CameraFunctions";
 
 function CreatePostModal({ show, toggleModal }) {
   /* Bottom sheet reference and snap points */
@@ -25,6 +27,7 @@ function CreatePostModal({ show, toggleModal }) {
 
   const [isPublic, setIsPublic] = useState(true);
   const [post, onPostChange] = useState("");
+  const [postImage, setPostImage] = useState("");
   const postRef = useRef(null);
 
   const toggleIsPublic = () => setIsPublic(!isPublic);
@@ -60,6 +63,23 @@ function CreatePostModal({ show, toggleModal }) {
     }
   };
 
+  const openCamera = async () => {
+    CameraFunctions.launchCamera().then((r) => setPostImage(r));
+  };
+
+  const openMediaLibrary = async () => {
+    CameraFunctions.launchImageLibrary().then((r) => setPostImage(r));
+  };
+
+  useEffect(() => {
+    if (!CameraFunctions.hasCameraPermission()) {
+      CameraFunctions.requestCameraPermission();
+    }
+    if (!CameraFunctions.hasMediaLibraryPermission()) {
+      CameraFunctions.requestMediaLibraryPermission();
+    }
+  }, []);
+
   useEffect(() => {
     if (show) {
       StatusBar.setBarStyle("dark-content");
@@ -73,6 +93,7 @@ function CreatePostModal({ show, toggleModal }) {
     <>
       <Modal
         animationType="slide"
+        presentationStyle="fullScreen"
         transparent={false}
         visible={show}
         onRequestClose={() => {
@@ -136,7 +157,7 @@ function CreatePostModal({ show, toggleModal }) {
                         fontSize: 16,
                       }}
                     >
-                      Jean Depardieux Felix
+                      Roy Christo
                     </Text>
                     <View
                       style={{
@@ -182,30 +203,49 @@ function CreatePostModal({ show, toggleModal }) {
                     onChangeText={(text) => onPostChange(text)}
                     ref={postRef}
                   />
-                  <View style={styles.uploaded_image}></View>
+                  <View style={{ marginTop: 30 }}>
+                    {postImage ? (
+                      <View
+                        style={{
+                          height: 150,
+                          backgroundColor: "rgba(0,0,0,0.8)",
+                          borderRadius: 15,
+                        }}
+                      >
+                        <Image
+                          source={{
+                            uri: postImage.uri,
+                            height: 150,
+                          }}
+                          borderRadius={15}
+                          resizeMode="cover"
+                        />
+                      </View>
+                    ) : null}
+                  </View>
                 </View>
               </ScrollView>
               <View style={[styles.bottom_actions]}>
                 <View style={{ flexDirection: "row" }}>
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={() => openCamera()}>
                     <IconButton
                       style={styles.action_icon}
                       icon="camera"
                       color="rgba(0,0,0,0.6)"
                     />
                   </TouchableOpacity>
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={() => openMediaLibrary()}>
                     <IconButton
                       style={styles.action_icon}
                       icon="image"
                       color="rgba(0,0,0,0.6)"
                     />
                   </TouchableOpacity>
-                  <TouchableOpacity>
+                  <TouchableOpacity disabled={true}>
                     <IconButton
                       style={styles.action_icon}
                       icon="video"
-                      color="rgba(0,0,0,0.6)"
+                      color="rgba(0,0,0,0.3)"
                     />
                   </TouchableOpacity>
                 </View>
@@ -258,7 +298,7 @@ function CreatePostModal({ show, toggleModal }) {
               }}
             >
               <TouchableOpacity
-                //onPress={() => openCamera()}
+                onPress={() => openMediaLibrary()}
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
@@ -275,7 +315,7 @@ function CreatePostModal({ show, toggleModal }) {
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                //onPress={() => openCamera()}
+                onPress={() => openCamera()}
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
@@ -293,15 +333,16 @@ function CreatePostModal({ show, toggleModal }) {
               </TouchableOpacity>
               <TouchableOpacity
                 //onPress={() => openCamera()}
+                disabled={true}
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
                 }}
               >
-                <IconButton color="rgba(0,0,0,0.7)" icon="video" />
+                <IconButton color="rgba(0,0,0,0.3)" icon="video" />
                 <Text
                   style={{
-                    color: "rgba(0,0,0,0.7)",
+                    color: "rgba(0,0,0,0.3)",
                     fontFamily: "Avenir-Heavy",
                   }}
                 >
@@ -315,10 +356,10 @@ function CreatePostModal({ show, toggleModal }) {
                   alignItems: "center",
                 }}
               >
-                <IconButton color="rgba(0,0,0,0.7)" icon="file-document" />
+                <IconButton color="rgba(0,0,0,0.3)" icon="file-document" />
                 <Text
                   style={{
-                    color: "rgba(0,0,0,0.7)",
+                    color: "rgba(0,0,0,0.3)",
                     fontFamily: "Avenir-Heavy",
                   }}
                 >
@@ -332,10 +373,10 @@ function CreatePostModal({ show, toggleModal }) {
                   alignItems: "center",
                 }}
               >
-                <IconButton color="rgba(0,0,0,0.7)" icon="map-marker" />
+                <IconButton color="rgba(0,0,0,0.3)" icon="map-marker" />
                 <Text
                   style={{
-                    color: "rgba(0,0,0,0.7)",
+                    color: "rgba(0,0,0,0.3)",
                     fontFamily: "Avenir-Heavy",
                   }}
                 >

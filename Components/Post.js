@@ -4,27 +4,33 @@ import {
   Animated,
   Easing,
   Image,
+  Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { Avatar } from "react-native-paper";
+import ViewImage from "./ViewImage";
 
-function Post({ post }) {
+function Post({ post, userLikedPosts, toggleLikePost }) {
   const navigation = useNavigation();
+  const [showModal, setShowModal] = useState(false);
+  const toggleShowModal = () => setShowModal(!showModal);
+
+  const isUserLikedPost = () => {
+    if (userLikedPosts.findIndex((p) => p.id == post.id) !== -1) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
   const [showMoreButton, setShowMoreButton] = useState(false);
   const [textShown, setTextShown] = useState(false);
   const [numLines, setNumLines] = useState(undefined);
 
-  const [isLiked, setIsLiked] = useState(false);
-
   const likedOpacity = useRef(new Animated.Value(0)).current;
-
-  const toggleIsLiked = () => {
-    animate();
-    setIsLiked(!isLiked);
-  };
 
   const toggleTextShown = () => {
     setTextShown(!textShown);
@@ -48,6 +54,10 @@ function Post({ post }) {
   useEffect(() => {
     setNumLines(textShown ? undefined : 3);
   }, [textShown]);
+
+  useEffect(() => {
+    animate();
+  }, [userLikedPosts]);
 
   const onTextLayout = useCallback(
     (e) => {
@@ -101,7 +111,8 @@ function Post({ post }) {
             </Text>
           ) : null}
           {post.image_url ? (
-            <View
+            <Pressable
+              onPress={() => toggleShowModal()}
               style={{
                 height: 150,
                 margin: 5,
@@ -110,15 +121,15 @@ function Post({ post }) {
               }}
             >
               <Image
-                style={{}}
                 source={{
                   uri: post.image_url,
                   height: 150,
+                  cache: "default",
                 }}
                 borderRadius={15}
                 resizeMode="cover"
               />
-            </View>
+            </Pressable>
           ) : null}
         </View>
         <View style={styles.footer}>
@@ -129,7 +140,12 @@ function Post({ post }) {
               flex: 0.7,
             }}
           >
-            <TouchableOpacity style={styles.button_content}>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("Talk", { post: post, focusKeyboard: true })
+              }
+              style={styles.button_content}
+            >
               <Avatar.Icon
                 icon="comment-text-outline"
                 color={"rgba(0,0,0,0.4)"}
@@ -139,10 +155,10 @@ function Post({ post }) {
               <Text style={styles.button_Text}>{post.comments}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => toggleIsLiked()}
+              onPress={() => toggleLikePost(post, 1)}
               style={styles.button_content}
             >
-              {isLiked ? (
+              {isUserLikedPost() ? (
                 <Animated.View
                   style={{
                     opacity: likedOpacity,
@@ -191,6 +207,11 @@ function Post({ post }) {
           </View>
         </View>
       </View>
+      <ViewImage
+        show={showModal}
+        image={post.image_url}
+        toggleModal={toggleShowModal}
+      />
     </View>
   );
 }

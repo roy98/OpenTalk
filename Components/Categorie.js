@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ImageBackground,
   Pressable,
@@ -8,14 +8,18 @@ import {
 } from "react-native";
 import { Colors, IconButton } from "react-native-paper";
 
-function Categorie({ item }) {
-  const [isSelected, setIsSelected] = useState(false);
-
-  const toggleIsSelected = () => setIsSelected(!isSelected);
+function Categorie({ item, toggle, userCategories }) {
+  const isCategorySelected = () => {
+    if (userCategories.findIndex((cat) => cat.id == item.id) !== -1) {
+      return true;
+    } else {
+      return false;
+    }
+  };
 
   return (
     <Pressable
-      onPress={toggleIsSelected}
+      onPress={() => toggle(item)}
       style={({ pressed }) => [
         {
           opacity: pressed ? 0.7 : 1,
@@ -29,10 +33,12 @@ function Categorie({ item }) {
         style={styles.image}
         imageStyle={{ borderRadius: 15 }}
       >
-        {isSelected && (
+        {isCategorySelected() && (
           <>
             <View style={styles.name_content} />
-            <Text style={styles.text}>{isSelected ? item.name : ""}</Text>
+            <Text style={styles.text}>
+              {isCategorySelected() ? item.name : ""}
+            </Text>
             <IconButton
               style={{ margin: 0 }}
               icon="check"

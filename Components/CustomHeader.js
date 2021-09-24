@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   Keyboard,
@@ -51,9 +51,11 @@ export function CustomBackHeader({ route }) {
 
 export function CustomSearchHeader({ route }) {
   const [focus, setFocus] = useState(false);
+  const [text, setText] = useState("");
 
   const handleCancel = () => {
     setFocus(!focus);
+    setText("");
     Keyboard.dismiss();
   };
 
@@ -84,6 +86,8 @@ export function CustomSearchHeader({ route }) {
             placeholder="Search"
             returnKeyType="search"
             style={[styles.search_input]}
+            defaultValue={text}
+            onChangeText={setText}
           />
           <Avatar.Icon
             icon="magnify"

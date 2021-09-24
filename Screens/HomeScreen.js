@@ -1,29 +1,59 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   FlatList,
   RefreshControl,
+  ScrollView,
   StyleSheet,
-  TouchableHighlight,
   TouchableOpacity,
   View,
 } from "react-native";
 import Post from "../Components/Post";
-import PostsList from "../API/FakePosts";
 import { IconButton } from "react-native-paper";
 import CreatePostModal from "../Components/CreatePostModal";
 import { wait } from "../Utils/core";
+import { useSelector, useDispatch } from "react-redux";
+import { bindActionCreators } from "redux";
+import * as actionCreators from "../Store/action_creators/index";
+import Skeleton_home from "../Components/Skeleton_home";
 
 function HomeScreen({ route }) {
-  const [posts, setPosts] = useState(PostsList);
-  const [refreshing, setRefreshing] = useState(false);
+  const postState = useSelector((state) => state.post);
+  const alertState = useSelector((state) => state.alert);
+
+  const dispatch = useDispatch();
+  const { getAllPosts, toggleLikedPost } = bindActionCreators(
+    actionCreators,
+    dispatch
+  );
+
   const [showModal, setShowModal] = useState(false);
 
   const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    wait(2000).then(() => setRefreshing(false));
+    getAllPosts();
   }, []);
 
   const toggleShowModal = () => setShowModal(!showModal);
+
+  useEffect(() => {
+    getAllPosts();
+  }, []);
+
+  if (alertState.isLoading && postState.posts.length < 1) {
+    return (
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          backgroundColor: "#fff",
+          padding: 10,
+        }}
+      >
+        <Skeleton_home />
+        <Skeleton_home showMedia />
+        <Skeleton_home showMedia />
+        <Skeleton_home />
+      </ScrollView>
+    );
+  }
 
   return (
     <View
@@ -34,13 +64,22 @@ function HomeScreen({ route }) {
       }}
     >
       <FlatList
-        data={posts}
+        data={postState.posts}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => <Post post={item} />}
+        renderItem={({ item }) => (
+          <Post
+            userLikedPosts={postState.userLikedPosts}
+            toggleLikePost={toggleLikedPost}
+            post={item}
+          />
+        )}
         initialNumToRender={10}
         showsVerticalScrollIndicator={true}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={alertState.isLoading}
+            onRefresh={onRefresh}
+          />
         }
         ItemSeparatorComponent={(props) => {
           return (

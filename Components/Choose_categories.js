@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { IconButton } from "react-native-paper";
 import {
+  ActivityIndicator,
   FlatList,
   ScrollView,
   StyleSheet,
@@ -9,10 +10,44 @@ import {
   View,
 } from "react-native";
 import Categorie from "./Categorie";
-import allCategories from "../API/FakeCategories";
+import { wait } from "../Utils/core";
+import { useSelector, useDispatch } from "react-redux";
+import { bindActionCreators } from "redux";
+import * as actionCreators from "../Store/action_creators/index";
+import { getCategories, setUserCategory } from "../API/Auth.service";
 
-function Choose_categories({ onNext }) {
-  const [categories, setCategories] = useState(allCategories);
+function Choose_categories({ onNext, hideLoader, displayLoader }) {
+  const categoryState = useSelector((state) => state.category);
+  const currentUser = useSelector((state) => state.authentication.user);
+  const dispatch = useDispatch();
+  const { getAllCategories, toggleCategory, error } = bindActionCreators(
+    actionCreators,
+    dispatch
+  );
+
+  const handleSubmit = () => {
+    displayLoader();
+    setUserCategory(currentUser.id, categoryState.userCategories)
+      .then((res) => {
+        hideLoader();
+        onNext();
+      })
+      .catch((err) => {
+        hideLoader();
+        console.log(err);
+        onNext();
+      });
+  };
+
+  useEffect(() => {
+    getCategories()
+      .then((res) => {
+        getAllCategories(res.items);
+      })
+      .catch((err) => {
+        error(err.message);
+      });
+  }, []);
 
   return (
     <View style={styles.form}>
@@ -31,11 +66,28 @@ function Choose_categories({ onNext }) {
       </View>
       <View style={styles.categories_container}>
         <FlatList
-          data={categories}
+          data={categoryState.categories}
           keyExtractor={(item) => item.id.toString()}
           initialNumToRender={9}
           numColumns={3}
-          renderItem={({ item }) => <Categorie item={item} />}
+          ListEmptyComponent={({}) => (
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <ActivityIndicator color="purple" size="small" />
+            </View>
+          )}
+          renderItem={({ item }) => (
+            <Categorie
+              toggle={toggleCategory}
+              userCategories={categoryState.userCategories}
+              item={item}
+            />
+          )}
         />
       </View>
       <View
@@ -76,7 +128,7 @@ function Choose_categories({ onNext }) {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={onNext}
+          onPress={handleSubmit}
           style={[
             styles.btn,
             {

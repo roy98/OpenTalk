@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   ScrollView,
@@ -9,22 +9,36 @@ import {
   Animated,
   Easing,
   Image,
+  Pressable,
 } from "react-native";
 import { Avatar, TextInput } from "react-native-paper";
 import Comment from "../Components/Comment";
 import FakeComments from "../API/FakeComments";
+import ViewImage from "../Components/ViewImage";
+import { useSelector, useDispatch } from "react-redux";
+import { bindActionCreators } from "redux";
+import * as actionCreators from "../Store/action_creators/index";
 
 function TalkDetailScreen({ route }) {
-  const { post } = route.params;
+  const postState = useSelector((state) => state.post);
+  const dispatch = useDispatch();
+  const { toggleLikedPost } = bindActionCreators(actionCreators, dispatch);
+
+  const isUserLikedPost = () => {
+    if (postState.userLikedPosts.findIndex((p) => p.id == post.id) !== -1) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  const [showModal, setShowModal] = useState(false);
+  const toggleShowModal = () => setShowModal(!showModal);
+
+  const { post, focusKeyboard } = route.params;
   const [comment, setComment] = useState("");
 
-  const [isLiked, setIsLiked] = useState(false);
   const likedOpacity = useRef(new Animated.Value(0)).current;
-
-  const toggleIsLiked = () => {
-    animate();
-    setIsLiked(!isLiked);
-  };
 
   const animate = () => {
     likedOpacity.setValue(0);
@@ -40,6 +54,10 @@ function TalkDetailScreen({ route }) {
     inputRange: [0, 1],
     outputRange: [22, 30],
   });
+
+  useEffect(() => {
+    animate();
+  }, [postState.userLikedPosts]);
 
   return (
     <View style={styles.container}>
@@ -76,7 +94,8 @@ function TalkDetailScreen({ route }) {
               {post.content}
             </Text>
             {post.image_url ? (
-              <View
+              <Pressable
+                onPress={() => toggleShowModal()}
                 style={{
                   height: 150,
                   marginVertical: 15,
@@ -88,11 +107,12 @@ function TalkDetailScreen({ route }) {
                   source={{
                     uri: post.image_url,
                     height: 150,
+                    cache: "default",
                   }}
                   borderRadius={15}
                   resizeMode="cover"
                 />
-              </View>
+              </Pressable>
             ) : null}
           </View>
           <View style={styles.footer}>
@@ -113,10 +133,10 @@ function TalkDetailScreen({ route }) {
                 <Text style={styles.button_Text}>{post.comments}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => toggleIsLiked()}
+                onPress={() => toggleLikedPost(post, 1)}
                 style={styles.button_content}
               >
-                {isLiked ? (
+                {isUserLikedPost() ? (
                   <Animated.View
                     style={{
                       opacity: likedOpacity,
@@ -187,6 +207,11 @@ function TalkDetailScreen({ route }) {
             </TouchableOpacity>
           </View>
         </ScrollView>
+        <ViewImage
+          show={showModal}
+          image={post.image_url}
+          toggleModal={toggleShowModal}
+        />
       </View>
       <KeyboardAvoidingView
         style={{ backgroundColor: "#fff" }}
@@ -204,6 +229,7 @@ function TalkDetailScreen({ route }) {
             maxLength={100}
             defaultValue={comment}
             onChangeText={setComment}
+            autoFocus={focusKeyboard}
           />
           <View
             style={{

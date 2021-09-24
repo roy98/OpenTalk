@@ -9,11 +9,54 @@ import {
   ScrollView,
   Image,
   KeyboardAvoidingView,
+  ActivityIndicator,
 } from "react-native";
 import { TextInput } from "react-native-paper";
-import { validateEmail } from "../Utils/core";
+import { validateEmail, wait } from "../Utils/core";
+import { useDispatch } from "react-redux";
+import { bindActionCreators } from "redux";
+import * as actionCreators from "../Store/action_creators/index";
+import { login } from "../API/Auth.service";
 
 function LoginScreen({ navigation }) {
+  /* Global State for login */
+  const dispatch = useDispatch();
+  const { signIn, error, success } = bindActionCreators(
+    actionCreators,
+    dispatch
+  );
+
+  const handleLogin = () => {
+    displayLoader();
+    login(email, password)
+      .then((res) => {
+        hideLoader();
+        const data = res.signInUserSession.idToken;
+        signIn({
+          token: data.jwtToken,
+          user: {
+            id: data.payload.sub,
+            email: email,
+            name: data.payload.name,
+            alias: `@${email.split("@")[0]}`,
+          },
+        });
+      })
+      .catch((err) => {
+        error(err.message);
+        hideLoader();
+      });
+  };
+
+  /* Activity indicator */
+  const [showLoader, setShowLoader] = useState(false);
+  const displayLoader = () => setShowLoader(true);
+  const hideLoader = () => setShowLoader(false);
+
+  useEffect(() => {
+    hideLoader(false);
+  }, []);
+
   /* State to show or hide passwords */
   const [showPass, setShowPass] = useState(false);
 
@@ -23,6 +66,11 @@ function LoginScreen({ navigation }) {
 
   return (
     <>
+      {showLoader ? (
+        <View style={styles.loader}>
+          <ActivityIndicator color="purple" size="large" />
+        </View>
+      ) : null}
       <SafeAreaView style={styles.container}>
         <LinearGradient
           style={styles.gradient}
@@ -104,7 +152,10 @@ function LoginScreen({ navigation }) {
             </View>
           </View>
           <View style={styles.btn_container}>
-            <TouchableOpacity style={[styles.btn]}>
+            <TouchableOpacity
+              onPress={() => handleLogin()}
+              style={[styles.btn]}
+            >
               <Text
                 style={[
                   { textAlign: "center", color: "purple" },
@@ -189,6 +240,17 @@ const styles = StyleSheet.create({
   signUp_container: {
     alignItems: "flex-end",
     padding: 25,
+  },
+  loader: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    right: 0,
+    left: 0,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999,
   },
 });
 

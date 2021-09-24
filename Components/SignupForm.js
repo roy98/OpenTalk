@@ -15,9 +15,21 @@ import BottomSheet, {
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import * as CameraFunctions from "../Utils/CameraFunctions";
-import { validateEmail } from "../Utils/core";
+import { validateEmail, wait } from "../Utils/core";
+import {
+  signUp as APISignUP,
+  uploadImage,
+  createUser,
+} from "../API/Auth.service";
+import { useDispatch } from "react-redux";
+import { bindActionCreators } from "redux";
+import * as actionCreators from "../Store/action_creators/index";
 
-function SignupForm({ onNext }) {
+function SignupForm({ onNext, hideLoader, displayLoader }) {
+  /* Global State for login */
+  const dispatch = useDispatch();
+  const { signUp, error } = bindActionCreators(actionCreators, dispatch);
+
   /* Bottom sheet reference and snap points */
   const bottomSheetRef = useRef(null);
   const snapPoints = useMemo(() => [1, "18%"], []);
@@ -33,6 +45,110 @@ function SignupForm({ onNext }) {
   const [password, setPassword] = useState("");
   const [confirmP, setconfirmP] = useState("");
 
+  const validateForm = () => {
+    if (!name || name == "") {
+      error("The field Name is required");
+      return false;
+    }
+    if (!email || email == "") {
+      error("The field Email is required");
+      return false;
+    }
+    if (!password || password == "") {
+      error("The field Password is required");
+      return false;
+    }
+    if (!confirmP || confirmP == "") {
+      error("Passwords doesn't match");
+      return false;
+    }
+    if (confirmP !== password) {
+      error("Passwords doesn't match");
+      return false;
+    }
+
+    return true;
+  };
+
+  // S3 bucket Access denied when uploadind a files
+  /*   const handleSubmit = () => {
+    if (validateForm()) {
+      displayLoader();
+      if (image) {
+        const filename = `${
+          name.split(" ")[0]
+        }_avatar_${new Date().toISOString()}_${
+          Math.floor(Math.random() * 9) - 1
+        }`;
+        uploadImage(filename, image)
+          .then((res) => {
+            console.log(res);
+            startSignIn();
+          })
+          .catch((err) => {
+            console.log(err);
+            hideLoader();
+          });
+      } else {
+        startSignIn();
+      }
+    }
+  }; */
+
+  const handleSubmit = () => {
+    if (validateForm()) {
+      startSignIn();
+    }
+  };
+
+  const startSignIn = () => {
+    displayLoader();
+    APISignUP(name, email, password)
+      .then((res) => {
+        startUserCreation(
+          res.userSub,
+          name,
+          email,
+          `@${email.split("@")[0]}`,
+          password,
+          res.user.Session
+        );
+        hideLoader();
+      })
+      .catch((err) => {
+        error(err.message.split(": ")[1] || err.message);
+        hideLoader();
+      });
+  };
+
+  const startUserCreation = (id, name, email, alias, password, session) => {
+    displayLoader();
+    createUser({
+      id: id,
+      name: name,
+      email: email,
+      alias: alias,
+    })
+      .then((res) => {
+        hideLoader();
+        signUp({
+          user: {
+            id: id,
+            name: name,
+            email: email,
+            alias: alias,
+            password: password,
+            session: session,
+          },
+        }),
+          onNext();
+      })
+      .catch((err) => {
+        error("An exception occur, please try again later!");
+        hideLoader();
+      });
+  };
+
   const renderBackdrop = useCallback(
     (props) => (
       <BottomSheetBackdrop
@@ -46,10 +162,10 @@ function SignupForm({ onNext }) {
   );
 
   const showBottomSheet = () => {
-    if (CameraFunctions.hasCameraPermission()) {
+    if (!CameraFunctions.hasCameraPermission()) {
       CameraFunctions.requestCameraPermission();
     }
-    if (CameraFunctions.hasMediaLibraryPermission()) {
+    if (!CameraFunctions.hasMediaLibraryPermission()) {
       CameraFunctions.requestMediaLibraryPermission();
     }
     if (Platform.OS === "android") {
@@ -123,7 +239,7 @@ function SignupForm({ onNext }) {
               {image ? (
                 <Avatar.Image
                   source={{
-                    uri: image.uri,
+                    uri: "data:image/jpeg;base64," + image.base64,
                     height: image.height,
                     width: image.width,
                   }}
@@ -193,7 +309,7 @@ function SignupForm({ onNext }) {
             />
           </View>
           <View style={styles.btn_container}>
-            <TouchableOpacity onPress={onNext} style={[styles.btn]}>
+            <TouchableOpacity onPress={handleSubmit} style={[styles.btn]}>
               <Text
                 style={[
                   { textAlign: "center", color: "purple" },
