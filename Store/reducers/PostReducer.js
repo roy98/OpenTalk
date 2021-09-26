@@ -3,12 +3,23 @@ const initialState = {
   userLikedPosts: [],
 };
 
+function recentPostFirst(a, b) {
+  if (a.createdAt < b.createdAt) {
+    return 1;
+  }
+  if (a.createdAt > b.createdAt) {
+    return -1;
+  }
+  return 0;
+}
+
 const reducer = (state = initialState, action) => {
   switch (action.type) {
     case "LOAD_ALL_POSTS":
+      const sortedPosts = action.payload.sort(recentPostFirst);
       return {
         ...state,
-        posts: action.payload,
+        posts: sortedPosts,
       };
     case "LOAD_ALL_LIKES":
       return {
