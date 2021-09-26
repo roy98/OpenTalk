@@ -16,6 +16,7 @@ import Screens from "../Screens";
 import { useSelector, useDispatch } from "react-redux";
 import { bindActionCreators } from "redux";
 import * as actionCreators from "../Store/action_creators/index";
+import { Auth } from "aws-amplify";
 
 const Drawer = createDrawerNavigator();
 const LoginStack = createNativeStackNavigator();
@@ -149,10 +150,23 @@ function Navigation() {
   const { restoreToken } = bindActionCreators(actionCreators, dispatch);
 
   useEffect(() => {
-    let timer = setTimeout(() => {
-      restoreToken({ token: null, user: null });
-    }, 5000);
-    () => clearTimeout(timer);
+    Auth.currentAuthenticatedUser()
+      .then((res) => {
+        const data = res.signInUserSession.idToken;
+        restoreToken({
+          token: data.jwtToken,
+          user: {
+            id: data.payload.sub,
+            email: data.payload.email,
+            name: data.payload.name,
+            alias: `@${data.payload.email.split("@")[0]}`,
+          },
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+        restoreToken({ token: null, user: null });
+      });
   }, []);
 
   if (authState.isLoading) {

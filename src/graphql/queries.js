@@ -119,6 +119,7 @@ export const getPost = /* GraphQL */ `
         updatedAt
       }
       image_url
+      createdAt
       comments {
         items {
           id
@@ -140,7 +141,6 @@ export const getPost = /* GraphQL */ `
         }
         nextToken
       }
-      createdAt
       updatedAt
     }
   }
@@ -168,13 +168,13 @@ export const listPosts = /* GraphQL */ `
           updatedAt
         }
         image_url
+        createdAt
         comments {
           nextToken
         }
         likes {
           nextToken
         }
-        createdAt
         updatedAt
       }
       nextToken
@@ -224,13 +224,13 @@ export const getComment = /* GraphQL */ `
           updatedAt
         }
         image_url
+        createdAt
         comments {
           nextToken
         }
         likes {
           nextToken
         }
-        createdAt
         updatedAt
       }
       content
@@ -320,13 +320,13 @@ export const getLike = /* GraphQL */ `
           updatedAt
         }
         image_url
+        createdAt
         comments {
           nextToken
         }
         likes {
           nextToken
         }
-        createdAt
         updatedAt
       }
       createdAt
@@ -423,6 +423,50 @@ export const listFriends = /* GraphQL */ `
         userID
         friendID
         createdAt
+        updatedAt
+      }
+      nextToken
+    }
+  }
+`;
+export const postByDate = /* GraphQL */ `
+  query PostByDate(
+    $createdAt: String
+    $sortDirection: ModelSortDirection
+    $filter: ModelPostFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    postByDate(
+      createdAt: $createdAt
+      sortDirection: $sortDirection
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+    ) {
+      items {
+        id
+        content
+        status
+        date
+        userID
+        user {
+          id
+          name
+          alias
+          email
+          avatar
+          createdAt
+          updatedAt
+        }
+        image_url
+        createdAt
+        comments {
+          nextToken
+        }
+        likes {
+          nextToken
+        }
         updatedAt
       }
       nextToken

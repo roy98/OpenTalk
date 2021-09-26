@@ -19,8 +19,16 @@ import { Avatar, Colors, IconButton } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import * as CameraFunctions from "../Utils/CameraFunctions";
+import { createPost, uploadImage } from "../API/Auth.service";
+import { useSelector, useDispatch } from "react-redux";
+import { bindActionCreators } from "redux";
+import * as actionCreators from "../Store/action_creators/index";
 
 function CreatePostModal({ show, toggleModal }) {
+  const currentUser = useSelector((state) => state.authentication.user);
+  const dispatch = useDispatch();
+  const { success, error } = bindActionCreators(actionCreators, dispatch);
+
   /* Bottom sheet reference and snap points */
   const bottomSheetRef = useRef(null);
   const snapPoints = useMemo(() => ["35%"], []);
@@ -86,8 +94,42 @@ function CreatePostModal({ show, toggleModal }) {
     } else {
       StatusBar.setBarStyle("light-content");
     }
-    onPostChange("");
+    refreshForm();
   }, [show]);
+
+  handleSubmitForm = () => {
+    createPost({
+      content: post,
+      status: isPublic,
+      userID: currentUser.id,
+      date: new Date().toUTCString(),
+      image_url: "",
+    })
+      .then((res) => {
+        toggleModal();
+        refreshForm();
+        success("Post created");
+      })
+      .catch((err) => {
+        console.log(err);
+        error("Cannot create the post now.");
+      });
+  };
+
+  function getFriendLabel() {
+    return currentUser.name
+      .split(" ")
+      .map((item) => item[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  }
+
+  const refreshForm = () => {
+    onPostChange("");
+    setPostImage("");
+    setIsPublic(true);
+  };
 
   return (
     <>
@@ -119,7 +161,7 @@ function CreatePostModal({ show, toggleModal }) {
                   Start Post
                 </Text>
                 <TouchableOpacity
-                  //onPress={() => toggleModal()}
+                  onPress={() => handleSubmitForm()}
                   style={[
                     styles.post_btn,
                     !post ? styles.post_btn_disabled : null,
@@ -145,11 +187,29 @@ function CreatePostModal({ show, toggleModal }) {
                 contentContainerStyle={{ flexGrow: 1 }}
               >
                 <View style={styles.userBox}>
-                  <Avatar.Text
-                    label="JD"
-                    size={50}
-                    style={{ marginRight: 10 }}
-                  />
+                  {currentUser.avatar ? (
+                    <Avatar.Image
+                      key={user.id}
+                      source={{ uri: currentUser.avatar }}
+                      size={50}
+                      style={{
+                        margin: 10,
+                        flex: 1,
+                        justifyContent: "center",
+                        alignItems: "center",
+                        width: 40,
+                        height: 40,
+                      }}
+                    />
+                  ) : (
+                    <Avatar.Text
+                      label={getFriendLabel()}
+                      size={50}
+                      style={{
+                        margin: 10,
+                      }}
+                    />
+                  )}
                   <View>
                     <Text
                       style={{
@@ -157,7 +217,7 @@ function CreatePostModal({ show, toggleModal }) {
                         fontSize: 16,
                       }}
                     >
-                      Roy Christo
+                      {currentUser.name}
                     </Text>
                     <View
                       style={{

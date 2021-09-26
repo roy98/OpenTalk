@@ -15,30 +15,97 @@ import { useSelector, useDispatch } from "react-redux";
 import { bindActionCreators } from "redux";
 import * as actionCreators from "../Store/action_creators/index";
 import Skeleton_home from "../Components/Skeleton_home";
+import {
+  getPosts,
+  likePost,
+  unLikePost,
+  getUserLikes,
+  onCreatePost,
+} from "../API/Auth.service";
 
 function HomeScreen({ route }) {
   const postState = useSelector((state) => state.post);
-  const alertState = useSelector((state) => state.alert);
+  const currentUser = useSelector((state) => state.authentication.user);
 
   const dispatch = useDispatch();
-  const { getAllPosts, toggleLikedPost } = bindActionCreators(
-    actionCreators,
-    dispatch
-  );
+  const {
+    getAllPosts,
+    getAllLikes,
+    toggleLikedPost,
+    error,
+    success,
+    newPostAdded,
+  } = bindActionCreators(actionCreators, dispatch);
 
-  const [showModal, setShowModal] = useState(false);
+  const handleLikePost = (post) => {
+    likePost(currentUser.id, post.id)
+      .then((res) => {
+        toggleLikedPost(res);
+      })
+      .catch((err) => {
+        error(err.message);
+      });
+  };
+
+  const handleUnLikePost = (like) => {
+    unLikePost(like.id)
+      .then((res) => {
+        toggleLikedPost(res);
+      })
+      .catch((err) => {
+        error(err.message);
+      });
+  };
 
   const onRefresh = useCallback(() => {
-    getAllPosts();
+    setRefreshing(true);
+    getPosts()
+      .then((res) => {
+        setRefreshing(false);
+        getAllPosts(res.items);
+      })
+      .catch((err) => {
+        setRefreshing(false);
+      });
   }, []);
 
+  const [showModal, setShowModal] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const toggleShowModal = () => setShowModal(!showModal);
 
   useEffect(() => {
-    getAllPosts();
+    displayLoader();
+    getPosts()
+      .then((res) => {
+        getAllPosts(res.items);
+        hideLoader();
+      })
+      .catch((err) => {
+        hideLoader();
+      });
+
+    getUserLikes(currentUser.id)
+      .then((res) => {
+        getAllLikes(res.items);
+      })
+      .catch((err) => {
+        error(err.message);
+      });
+
+    onCreatePost().subscribe({
+      next: (data) => {
+        newPostAdded(data.value.data.onCreatePost);
+        success("New updates");
+      },
+    });
   }, []);
 
-  if (alertState.isLoading && postState.posts.length < 1) {
+  /* Skeletton indicator */
+  const [showLoader, setShowLoader] = useState(false);
+  const displayLoader = () => setShowLoader(true);
+  const hideLoader = () => setShowLoader(false);
+
+  if (showLoader && postState.posts.length < 1) {
     return (
       <ScrollView
         contentContainerStyle={{
@@ -68,18 +135,16 @@ function HomeScreen({ route }) {
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <Post
+            likePost={handleLikePost}
+            unLikePost={handleUnLikePost}
             userLikedPosts={postState.userLikedPosts}
-            toggleLikePost={toggleLikedPost}
             post={item}
           />
         )}
         initialNumToRender={10}
         showsVerticalScrollIndicator={true}
         refreshControl={
-          <RefreshControl
-            refreshing={alertState.isLoading}
-            onRefresh={onRefresh}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
         ItemSeparatorComponent={(props) => {
           return (

@@ -18,7 +18,7 @@
       "function": {
         "onUserSignInFunction": {
           "deploymentBucketName": "amplify-donewithit-dev-82450-deployment",
-          "s3Key": "amplify-builds/onUserSignInFunction-54362f71394441763879-build.zip"
+          "s3Key": "amplify-builds/onUserSignInFunction-43717078485068397237-build.zip"
         }
       }
     }

@@ -211,6 +211,7 @@ export const createPost = /* GraphQL */ `
         updatedAt
       }
       image_url
+      createdAt
       comments {
         items {
           id
@@ -232,7 +233,6 @@ export const createPost = /* GraphQL */ `
         }
         nextToken
       }
-      createdAt
       updatedAt
     }
   }
@@ -270,6 +270,7 @@ export const updatePost = /* GraphQL */ `
         updatedAt
       }
       image_url
+      createdAt
       comments {
         items {
           id
@@ -291,7 +292,6 @@ export const updatePost = /* GraphQL */ `
         }
         nextToken
       }
-      createdAt
       updatedAt
     }
   }
@@ -329,6 +329,7 @@ export const deletePost = /* GraphQL */ `
         updatedAt
       }
       image_url
+      createdAt
       comments {
         items {
           id
@@ -350,7 +351,6 @@ export const deletePost = /* GraphQL */ `
         }
         nextToken
       }
-      createdAt
       updatedAt
     }
   }
@@ -401,13 +401,13 @@ export const createComment = /* GraphQL */ `
           updatedAt
         }
         image_url
+        createdAt
         comments {
           nextToken
         }
         likes {
           nextToken
         }
-        createdAt
         updatedAt
       }
       content
@@ -462,13 +462,13 @@ export const updateComment = /* GraphQL */ `
           updatedAt
         }
         image_url
+        createdAt
         comments {
           nextToken
         }
         likes {
           nextToken
         }
-        createdAt
         updatedAt
       }
       content
@@ -523,13 +523,13 @@ export const deleteComment = /* GraphQL */ `
           updatedAt
         }
         image_url
+        createdAt
         comments {
           nextToken
         }
         likes {
           nextToken
         }
-        createdAt
         updatedAt
       }
       content
@@ -584,13 +584,13 @@ export const createLike = /* GraphQL */ `
           updatedAt
         }
         image_url
+        createdAt
         comments {
           nextToken
         }
         likes {
           nextToken
         }
-        createdAt
         updatedAt
       }
       createdAt
@@ -644,13 +644,13 @@ export const updateLike = /* GraphQL */ `
           updatedAt
         }
         image_url
+        createdAt
         comments {
           nextToken
         }
         likes {
           nextToken
         }
-        createdAt
         updatedAt
       }
       createdAt
@@ -704,13 +704,13 @@ export const deleteLike = /* GraphQL */ `
           updatedAt
         }
         image_url
+        createdAt
         comments {
           nextToken
         }
         likes {
           nextToken
         }
-        createdAt
         updatedAt
       }
       createdAt

@@ -18,18 +18,49 @@ import ViewImage from "../Components/ViewImage";
 import { useSelector, useDispatch } from "react-redux";
 import { bindActionCreators } from "redux";
 import * as actionCreators from "../Store/action_creators/index";
+import moment from "moment";
+import { likePost, unLikePost } from "../API/Auth.service";
 
 function TalkDetailScreen({ route }) {
   const postState = useSelector((state) => state.post);
+  const currentUser = useSelector((state) => state.authentication);
+
   const dispatch = useDispatch();
   const { toggleLikedPost } = bindActionCreators(actionCreators, dispatch);
 
   const isUserLikedPost = () => {
-    if (postState.userLikedPosts.findIndex((p) => p.id == post.id) !== -1) {
+    if (postState.userLikedPosts.findIndex((l) => l.postID == post.id) !== -1) {
       return true;
     } else {
       return false;
     }
+  };
+
+  const getPostToUnLike = (post) => {
+    const like = postState.userLikedPosts.find((l) => l.postID == post.id);
+    if (like) {
+      handleUnLikePost(like);
+    }
+  };
+
+  const handleLikePost = (post) => {
+    likePost(currentUser.id, post.id)
+      .then((res) => {
+        toggleLikedPost(res);
+      })
+      .catch((err) => {
+        error(err.message);
+      });
+  };
+
+  const handleUnLikePost = (like) => {
+    unLikePost(like.id)
+      .then((res) => {
+        toggleLikedPost(res);
+      })
+      .catch((err) => {
+        error(err.message);
+      });
   };
 
   const [showModal, setShowModal] = useState(false);
@@ -59,20 +90,40 @@ function TalkDetailScreen({ route }) {
     animate();
   }, [postState.userLikedPosts]);
 
+  const [hasAvatar, setHasAvatar] = useState(false);
+  useEffect(() => {
+    if (post.user.avatar && user.avatar !== "") {
+      setHasAvatar(true);
+    }
+  }, []);
+
+  function getFriendLabel() {
+    return post.user.name
+      .split(" ")
+      .map((item) => item[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.content}>
         <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 15 }}>
           <View style={styles.avatar_container}>
-            <Avatar.Image
-              size={50}
-              source={{
-                uri: post.author.avatar,
-              }}
-            />
+            {hasAvatar ? (
+              <Avatar.Image
+                size={50}
+                source={{
+                  uri: post.user.avatar,
+                }}
+              />
+            ) : (
+              <Avatar.Text label={getFriendLabel()} size={50} />
+            )}
             <View style={{ marginLeft: 10 }}>
               <Text style={{ fontFamily: "Avenir-Heavy" }}>
-                {post.author.name}
+                {post.user.name}
               </Text>
               <Text
                 style={{
@@ -80,7 +131,7 @@ function TalkDetailScreen({ route }) {
                   color: "rgba(0,0,0,0.4)",
                 }}
               >
-                {post.author.alias}
+                {post.user.alias}
               </Text>
             </View>
           </View>
@@ -130,13 +181,15 @@ function TalkDetailScreen({ route }) {
                   size={30}
                   style={styles.avatar}
                 />
-                <Text style={styles.button_Text}>{post.comments}</Text>
+                <Text style={styles.button_Text}>
+                  {post.comments.items.length}
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => toggleLikedPost(post, 1)}
-                style={styles.button_content}
-              >
-                {isUserLikedPost() ? (
+              {isUserLikedPost() ? (
+                <TouchableOpacity
+                  onPress={() => getPostToUnLike(post)}
+                  style={styles.button_content}
+                >
                   <Animated.View
                     style={{
                       opacity: likedOpacity,
@@ -151,16 +204,26 @@ function TalkDetailScreen({ route }) {
                       style={[styles.avatar]}
                     />
                   </Animated.View>
-                ) : (
+                  <Text style={styles.button_Text}>
+                    {post.likes.items.length}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  onPress={() => handleLikePost(post)}
+                  style={styles.button_content}
+                >
                   <Avatar.Icon
                     icon="thumb-up-outline"
                     color={"rgba(0,0,0,0.4)"}
                     size={30}
                     style={styles.avatar}
                   />
-                )}
-                <Text style={styles.button_Text}>{post.likes}</Text>
-              </TouchableOpacity>
+                  <Text style={styles.button_Text}>
+                    {post.likes.items.length}
+                  </Text>
+                </TouchableOpacity>
+              )}
 
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <View
@@ -179,7 +242,7 @@ function TalkDetailScreen({ route }) {
                     color: "rgba(0,0,0,0.3)",
                   }}
                 >
-                  {post.created_at}
+                  {moment(post.createdAt).fromNow(false)}
                 </Text>
               </View>
             </View>

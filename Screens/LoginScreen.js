@@ -54,7 +54,7 @@ function LoginScreen({ navigation }) {
   const hideLoader = () => setShowLoader(false);
 
   useEffect(() => {
-    hideLoader(false);
+    hideLoader();
   }, []);
 
   /* State to show or hide passwords */

@@ -10,6 +10,16 @@ const reducer = (state = initialState, action) => {
         ...state,
         posts: action.payload,
       };
+    case "LOAD_ALL_LIKES":
+      return {
+        ...state,
+        userLikedPosts: action.payload,
+      };
+    case "ON_POST_CREATED":
+      return {
+        ...state,
+        posts: [action.payload, ...state.posts],
+      };
     case "TOGGLE_USER_LIKED_POST":
       const index = state.userLikedPosts.findIndex(
         (p) => p.id === action.payload.id

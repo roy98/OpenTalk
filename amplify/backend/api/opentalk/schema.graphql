@@ -10,7 +10,10 @@ type User @model {
   friends: [Friend] @connection(keyName: "friendByUser", fields: ["id"])
 }
 
-type Post @model @key(name: "postByUser", fields: ["userID"]) {
+type Post
+  @model
+  @key(name: "postByUser", fields: ["userID"])
+  @key(name: "postByDate", fields: ["createdAt"], queryField: "postByDate") {
   id: ID!
   content: String
   status: String!
@@ -18,6 +21,7 @@ type Post @model @key(name: "postByUser", fields: ["userID"]) {
   userID: ID!
   user: User @connection(fields: ["userID"])
   image_url: String
+  createdAt: String
   comments: [Comment] @connection(keyName: "commentByPost", fields: ["id"])
   likes: [Like] @connection(keyName: "likeByPost", fields: ["id"])
 }

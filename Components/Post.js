@@ -12,17 +12,25 @@ import {
 } from "react-native";
 import { Avatar } from "react-native-paper";
 import ViewImage from "./ViewImage";
+import moment from "moment";
 
-function Post({ post, userLikedPosts, toggleLikePost }) {
+function Post({ post, userLikedPosts, likePost, unLikePost }) {
   const navigation = useNavigation();
   const [showModal, setShowModal] = useState(false);
   const toggleShowModal = () => setShowModal(!showModal);
 
   const isUserLikedPost = () => {
-    if (userLikedPosts.findIndex((p) => p.id == post.id) !== -1) {
+    if (userLikedPosts.findIndex((l) => l.postID == post.id) !== -1) {
       return true;
     } else {
       return false;
+    }
+  };
+
+  const getPostToUnLike = (post) => {
+    const like = userLikedPosts.find((l) => l.postID == post.id);
+    if (like) {
+      unLikePost(like);
     }
   };
 
@@ -61,7 +69,7 @@ function Post({ post, userLikedPosts, toggleLikePost }) {
 
   const onTextLayout = useCallback(
     (e) => {
-      if (e.nativeEvent.lines.length > 3 && !textShown) {
+      if (e.nativeEvent.lines.length >= 3 && !textShown) {
         setShowMoreButton(true);
         setNumLines(3);
       }
@@ -69,19 +77,39 @@ function Post({ post, userLikedPosts, toggleLikePost }) {
     [textShown]
   );
 
+  const [hasAvatar, setHasAvatar] = useState(false);
+  useEffect(() => {
+    if (post.user.avatar && user.avatar !== "") {
+      setHasAvatar(true);
+    }
+  }, []);
+
+  function getFriendLabel() {
+    return post.user.name
+      .split(" ")
+      .map((item) => item[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  }
+
   return (
     <View style={[styles.container]}>
       <View style={styles.avatar_container}>
-        <Avatar.Image
-          size={50}
-          source={{
-            uri: post.author.avatar,
-          }}
-        />
+        {hasAvatar ? (
+          <Avatar.Image
+            size={50}
+            source={{
+              uri: post.user.avatar,
+            }}
+          />
+        ) : (
+          <Avatar.Text label={getFriendLabel()} size={50} />
+        )}
       </View>
       <View style={styles.post_container}>
         <View style={styles.author}>
-          <Text style={{ fontFamily: "Avenir-Heavy" }}>{post.author.name}</Text>
+          <Text style={{ fontFamily: "Avenir-Heavy" }}>{post.user.name}</Text>
           <Text
             style={{
               marginLeft: 20,
@@ -89,7 +117,7 @@ function Post({ post, userLikedPosts, toggleLikePost }) {
               color: "rgba(0,0,0,0.4)",
             }}
           >
-            {post.author.alias}
+            {post.user.alias}
           </Text>
         </View>
         <View style={{ marginBottom: 5 }}>
@@ -152,13 +180,15 @@ function Post({ post, userLikedPosts, toggleLikePost }) {
                 size={30}
                 style={styles.avatar}
               />
-              <Text style={styles.button_Text}>{post.comments}</Text>
+              <Text style={styles.button_Text}>
+                {post.comments.items.length}
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => toggleLikePost(post, 1)}
-              style={styles.button_content}
-            >
-              {isUserLikedPost() ? (
+            {isUserLikedPost() ? (
+              <TouchableOpacity
+                onPress={() => getPostToUnLike(post)}
+                style={styles.button_content}
+              >
                 <Animated.View
                   style={{
                     opacity: likedOpacity,
@@ -173,17 +203,26 @@ function Post({ post, userLikedPosts, toggleLikePost }) {
                     style={[styles.avatar]}
                   />
                 </Animated.View>
-              ) : (
+                <Text style={styles.button_Text}>
+                  {post.likes.items.length}
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={() => likePost(post)}
+                style={styles.button_content}
+              >
                 <Avatar.Icon
                   icon="thumb-up-outline"
                   color={"rgba(0,0,0,0.4)"}
                   size={30}
                   style={styles.avatar}
                 />
-              )}
-              <Text style={styles.button_Text}>{post.likes}</Text>
-            </TouchableOpacity>
-
+                <Text style={styles.button_Text}>
+                  {post.likes.items.length}
+                </Text>
+              </TouchableOpacity>
+            )}
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <View
                 style={{
@@ -201,7 +240,7 @@ function Post({ post, userLikedPosts, toggleLikePost }) {
                   color: "rgba(0,0,0,0.3)",
                 }}
               >
-                {post.created_at}
+                {moment(post.createdAt).fromNow(false)}
               </Text>
             </View>
           </View>
