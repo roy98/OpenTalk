@@ -29,6 +29,15 @@ export const newPostAdded = (post) => {
   };
 };
 
+export const postChanged = (post) => {
+  return (dispatch) => {
+    dispatch({
+      type: "ON_POST_CHANGED",
+      payload: post,
+    });
+  };
+};
+
 export const toggleLikedPost = (like) => {
   return (dispatch) => {
     dispatch({

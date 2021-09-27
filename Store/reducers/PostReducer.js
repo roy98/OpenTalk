@@ -31,6 +31,16 @@ const reducer = (state = initialState, action) => {
         ...state,
         posts: [action.payload, ...state.posts],
       };
+    case "ON_POST_CHANGED":
+      state.posts.forEach((value, index, array) => {
+        if (value.id == action.payload.id) {
+          array.splice(index, 1, action.payload);
+        }
+      });
+      return {
+        ...state,
+        posts: [...state.posts],
+      };
     case "TOGGLE_USER_LIKED_POST":
       const index = state.userLikedPosts.findIndex(
         (p) => p.id === action.payload.id

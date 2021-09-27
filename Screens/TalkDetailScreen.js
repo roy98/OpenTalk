@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   ScrollView,
@@ -19,14 +19,24 @@ import { useSelector, useDispatch } from "react-redux";
 import { bindActionCreators } from "redux";
 import * as actionCreators from "../Store/action_creators/index";
 import moment from "moment";
-import { likePost, unLikePost } from "../API/Auth.service";
+import {
+  likePost,
+  unLikePost,
+  onLikePost,
+  onUnLikePost,
+  getSinglePost,
+} from "../API/Auth.service";
+import { useFocusEffect } from "@react-navigation/core";
 
 function TalkDetailScreen({ route }) {
   const postState = useSelector((state) => state.post);
   const currentUser = useSelector((state) => state.authentication);
 
   const dispatch = useDispatch();
-  const { toggleLikedPost } = bindActionCreators(actionCreators, dispatch);
+  const { toggleLikedPost, error } = bindActionCreators(
+    actionCreators,
+    dispatch
+  );
 
   const isUserLikedPost = () => {
     if (postState.userLikedPosts.findIndex((l) => l.postID == post.id) !== -1) {
@@ -66,7 +76,9 @@ function TalkDetailScreen({ route }) {
   const [showModal, setShowModal] = useState(false);
   const toggleShowModal = () => setShowModal(!showModal);
 
-  const { post, focusKeyboard } = route.params;
+  const [post, setPost] = useState(route.params.post);
+  const { focusKeyboard } = route.params;
+
   const [comment, setComment] = useState("");
 
   const likedOpacity = useRef(new Animated.Value(0)).current;
@@ -91,11 +103,54 @@ function TalkDetailScreen({ route }) {
   }, [postState.userLikedPosts]);
 
   const [hasAvatar, setHasAvatar] = useState(false);
+  const [isMounted, setIsMonted] = useState(false);
+
   useEffect(() => {
+    setIsMonted(true);
     if (post.user.avatar && user.avatar !== "") {
       setHasAvatar(true);
     }
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (isMounted) {
+        /* Subscription for new Like */
+        onLikePost().subscribe({
+          next: (data) => {
+            if (post.id == data.value.data.onCreateLike.postID) {
+              getSinglePost(data.value.data.onCreateLike.postID)
+                .then((res) => {
+                  setPost(res);
+                })
+                .catch((err) => {
+                  console.log(err);
+                });
+            }
+          },
+        });
+
+        /* Subscription for UnLike */
+        onUnLikePost().subscribe({
+          next: (data) => {
+            if (post.id == data.value.data.onDeleteLike.postID) {
+              getSinglePost(data.value.data.onDeleteLike.postID)
+                .then((res) => {
+                  setPost(res);
+                })
+                .catch((err) => {
+                  console.log(err);
+                });
+            }
+          },
+        });
+      }
+
+      return () => {
+        setIsMonted(false);
+      };
+    }, [])
+  );
 
   function getFriendLabel() {
     return post.user.name

@@ -280,3 +280,66 @@ export function getUserLikes(userid) {
 export function onCreatePost() {
   return API.graphql(graphqlOperation(subscriptions.onCreatePost));
 }
+
+export function onLikePost() {
+  const onCreateLike = /* GraphQL */ `
+    subscription onCreateLike {
+      onCreateLike {
+        id
+        postID
+      }
+    }
+  `;
+  return API.graphql(graphqlOperation(onCreateLike));
+}
+
+export function onUnLikePost() {
+  const onDeleteLike = /* GraphQL */ `
+    subscription OnDeleteLike {
+      onDeleteLike {
+        id
+        postID
+      }
+    }
+  `;
+  return API.graphql(graphqlOperation(onDeleteLike));
+}
+
+export function getSinglePost(postid) {
+  const getPost = /* GraphQL */ `
+    query GetPost($id: ID!) {
+      getPost(id: $id) {
+        id
+        content
+        status
+        userID
+        user {
+          id
+          name
+          alias
+          email
+          avatar
+        }
+        image_url
+        createdAt
+        comments {
+          items {
+            id
+          }
+          nextToken
+        }
+        likes {
+          items {
+            id
+          }
+          nextToken
+        }
+      }
+    }
+  `;
+  return new Promise((resolve, reject) => {
+    const result = API.graphql(graphqlOperation(getPost, { id: postid }));
+    console.log(postid);
+    result.then((res) => resolve(res.data.getPost)).catch((err) => reject(err));
+  });
+}

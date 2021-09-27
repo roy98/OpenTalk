@@ -98,6 +98,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     borderRadius: 10,
+    zIndex: 9999,
   },
 });
 export default Alert;

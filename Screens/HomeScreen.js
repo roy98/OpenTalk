@@ -1,14 +1,15 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   FlatList,
   RefreshControl,
   ScrollView,
   StyleSheet,
+  Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import Post from "../Components/Post";
-import { IconButton } from "react-native-paper";
+import { Avatar, IconButton } from "react-native-paper";
 import CreatePostModal from "../Components/CreatePostModal";
 import { wait } from "../Utils/core";
 import { useSelector, useDispatch } from "react-redux";
@@ -21,6 +22,9 @@ import {
   unLikePost,
   getUserLikes,
   onCreatePost,
+  onLikePost,
+  onUnLikePost,
+  getSinglePost,
 } from "../API/Auth.service";
 
 function HomeScreen({ route }) {
@@ -35,6 +39,7 @@ function HomeScreen({ route }) {
     error,
     success,
     newPostAdded,
+    postChanged,
   } = bindActionCreators(actionCreators, dispatch);
 
   const handleLikePost = (post) => {
@@ -84,6 +89,7 @@ function HomeScreen({ route }) {
         hideLoader();
       });
 
+    /* Fetch current user likes */
     getUserLikes(currentUser.id)
       .then((res) => {
         getAllLikes(res.items);
@@ -92,10 +98,49 @@ function HomeScreen({ route }) {
         error(err.message);
       });
 
+    /* Subscription for new posts */
     onCreatePost().subscribe({
       next: (data) => {
         newPostAdded(data.value.data.onCreatePost);
-        success("New updates");
+        setNewPost(true);
+      },
+    });
+
+    /* Subscription for UnLike */
+    onUnLikePost().subscribe({
+      next: (data) => {
+        if (
+          postState.posts.findIndex(
+            (p) => p.id == data.value.data.onDeleteLike.postID
+          ) !== -1
+        ) {
+          getSinglePost(data.value.data.onDeleteLike.postID)
+            .then((res) => {
+              postChanged(res);
+            })
+            .catch((err) => {
+              console.log(err);
+            });
+        }
+      },
+    });
+
+    /* Subscription for new Like */
+    onLikePost().subscribe({
+      next: (data) => {
+        if (
+          postState.posts.findIndex(
+            (p) => p.id == data.value.data.onCreateLike.postID
+          ) !== -1
+        ) {
+          getSinglePost(data.value.data.onCreateLike.postID)
+            .then((res) => {
+              postChanged(res);
+            })
+            .catch((err) => {
+              console.log(err);
+            });
+        }
       },
     });
   }, []);
@@ -104,6 +149,16 @@ function HomeScreen({ route }) {
   const [showLoader, setShowLoader] = useState(false);
   const displayLoader = () => setShowLoader(true);
   const hideLoader = () => setShowLoader(false);
+
+  /* New Post alert */
+  const flatlist = useRef();
+  const [newPost, setNewPost] = useState(false);
+  const handleScroll = () => {
+    setTimeout(() => {
+      flatlist.current.scrollToIndex({ animated: true, index: 0 });
+      setNewPost(false);
+    }, 500);
+  };
 
   if (showLoader && postState.posts.length < 1) {
     return (
@@ -131,6 +186,7 @@ function HomeScreen({ route }) {
       }}
     >
       <FlatList
+        ref={flatlist}
         data={postState.posts}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
@@ -164,6 +220,16 @@ function HomeScreen({ route }) {
       >
         <IconButton icon="plus" size={30} color="rgba(255,255,255,0.8)" />
       </TouchableOpacity>
+      {newPost && (
+        <View style={styles.alert}>
+          <TouchableOpacity onPress={handleScroll} style={styles.alert_content}>
+            <Text style={{ marginHorizontal: 5, fontFamily: "Avenir" }}>
+              New Posts
+            </Text>
+            <Avatar.Icon size={15} icon="navigation" />
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -181,6 +247,32 @@ const styles = StyleSheet.create({
     right: 0,
     marginBottom: 7,
     marginRight: 15,
+  },
+  alert: {
+    height: 30,
+    position: "absolute",
+    top: 0,
+    right: 0,
+    left: 0,
+    marginTop: 35,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 99,
+  },
+  alert_content: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    padding: 10,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.39,
+    shadowRadius: 8.3,
+    elevation: 13,
   },
 });
 export default HomeScreen;
