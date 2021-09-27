@@ -101,8 +101,15 @@ function HomeScreen({ route }) {
     /* Subscription for new posts */
     onCreatePost().subscribe({
       next: (data) => {
-        newPostAdded(data.value.data.onCreatePost);
-        setNewPost(true);
+        if (
+          postState.posts.findIndex(
+            (p) => p.id == data.value.data.onCreatePost.id
+          ) == -1
+        ) {
+          console.log("called");
+          newPostAdded(data.value.data.onCreatePost);
+          setNewPost(true);
+        }
       },
     });
 

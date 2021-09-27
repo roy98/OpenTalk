@@ -114,40 +114,43 @@ function TalkDetailScreen({ route }) {
 
   useFocusEffect(
     useCallback(() => {
-      if (isMounted) {
-        /* Subscription for new Like */
-        onLikePost().subscribe({
-          next: (data) => {
-            if (post.id == data.value.data.onCreateLike.postID) {
-              getSinglePost(data.value.data.onCreateLike.postID)
-                .then((res) => {
+      /* Subscription for new Like */
+      onLikePost().subscribe({
+        next: (data) => {
+          if (post.id == data.value.data.onCreateLike.postID) {
+            getSinglePost(data.value.data.onCreateLike.postID)
+              .then((res) => {
+                if (isMounted) {
                   setPost(res);
-                })
-                .catch((err) => {
-                  console.log(err);
-                });
-            }
-          },
-        });
+                }
+              })
+              .catch((err) => {
+                console.log(err);
+              });
+          }
+        },
+      });
 
-        /* Subscription for UnLike */
-        onUnLikePost().subscribe({
-          next: (data) => {
-            if (post.id == data.value.data.onDeleteLike.postID) {
-              getSinglePost(data.value.data.onDeleteLike.postID)
-                .then((res) => {
+      /* Subscription for UnLike */
+      onUnLikePost().subscribe({
+        next: (data) => {
+          if (post.id == data.value.data.onDeleteLike.postID) {
+            getSinglePost(data.value.data.onDeleteLike.postID)
+              .then((res) => {
+                if (isMounted) {
                   setPost(res);
-                })
-                .catch((err) => {
-                  console.log(err);
-                });
-            }
-          },
-        });
-      }
+                }
+              })
+              .catch((err) => {
+                console.log(err);
+              });
+          }
+        },
+      });
 
       return () => {
         setIsMonted(false);
+        console.log(isMounted);
       };
     }, [])
   );
